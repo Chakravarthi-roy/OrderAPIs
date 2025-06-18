@@ -1,57 +1,59 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm.session import Session
 from db.tables import Product
-from schemas import ProductBase, ProductDisplay
 from database import get_db
-from create import create_product
+from create import createProduct
+from delete import deleteProduct
+from update import updateProduct
+from schemas import (
+    ProductCreate, 
+    ProductUpdate, 
+    ProductDisplay
+)
 
 router = APIRouter(
     prefix='/products',
     tags=['products']
-)
+)       
 
-def get_all_products(db: Session):
+def getProducts(db: Session):
     return db.query(Product).all()
 
-def update_product(db: Session, p_name: str, request: ProductBase):
-    product = db.query(Product).filter(Product.product_name==p_name)
-    product.update({
-        Product.product_name: request.product_name,
-        Product.price: request.price,
-        Product.time_req: request.time_req,
-        Product.category: request.category,
-        Product.description: request.description
-    })
-    db.commit()
-    return 'ok'
-
-def delete_product(db: Session, p_name: str):
-    product = db.query(Product).filter(Product.product_name==p_name).first()
-    if product:
-        db.delete(product)
-        db.commit()   
-        return 'Deleted'
-    else:
-        raise HTTPException(status_code=404, detail='Product does not exist')
+def getProduct(db: Session, product_name: str):
+    return db.query(Product).filter(Product.product_name == product_name).first()
 
 
-# create product
-@router.post('/', response_model=ProductDisplay)
-def create_products(request: ProductBase, db: Session = Depends(get_db)):
-    return create_product(db, request)
+# create product routes
+@router.post("/", response_model=ProductDisplay, status_code=status.HTTP_201_CREATED)
+def create_product(request: ProductCreate, db: Session = Depends(get_db)):
+    try:
+        return createProduct(db, request)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
 
-# Get all products
-@router.get('/products', response_model=List[ProductDisplay])
-def get_all_product(db: Session = Depends(get_db)):
-    return get_all_products(db)
 
-# Update products
-@router.post('/{p_name}/update')
-def update_products(p_name: str, request: ProductBase, db: Session = Depends(get_db)):
-    return update_product(db, p_name, request)
+@router.get("/", response_model=List[ProductDisplay])
+def get_all_products(db: Session = Depends(get_db)):
+    return getProducts(db)
 
-# Delete products
-@router.get('/{p_name}/delete')
-def delete_products(p_name: str, db: Session = Depends(get_db)):
-    return delete_product(db, p_name)
+@router.get("/{product_name}", response_model=ProductDisplay)
+def get_product_by_name(product_name: str, db: Session = Depends(get_db)):
+    db_product = getProduct(db, product_name)
+    if db_product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Product '{product_name}' not found")
+    return db_product
+
+@router.patch("/{product_name}", response_model=ProductDisplay)
+def update_product(product_name: str, request: ProductUpdate, db: Session = Depends(get_db)):
+    db_product = updateProduct(db, product_name, request)
+    if db_product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Product '{product_name}' not found")
+    return db_product
+
+@router.delete("/{product_name}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_product(product_name: str, db: Session = Depends(get_db)):
+    db_product = deleteProduct(db, product_name)
+    if db_product is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Product '{product_name}' not found")
+    return
