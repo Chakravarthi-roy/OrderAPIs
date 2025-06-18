@@ -1,5 +1,5 @@
 from sqlalchemy.orm.session import Session
-from db.tables import Order, OrderItem, Product
+from db.tables import Order, OrderItem, Product, User
 
 def deleteProduct(db: Session, p_name: str):
     db_product = db.query(Product).filter(Product.product_name == p_name).first()
@@ -33,3 +33,11 @@ def deleteOrderItem(db: Session, order_id: int, item_id: int):
     db.commit()
     db.refresh(db_order)
     return db_item
+
+def deleteUser(db: Session, user_id:int):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        return None
+    db.delete(db_user)
+    db.commit()
+    return db_user

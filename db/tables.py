@@ -11,7 +11,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
     full_name = Column(String)
-    address = Column(String)
+    hostel_no = Column(Integer)
 
     orders = relationship("Order", backref="user")
 

@@ -6,15 +6,14 @@ from typing import List, Optional
 from create import createOrder
 from update import updateOrder, updateOrderItem
 from delete import deleteOrder, deleteOrderItem
-
 from schemas import (
     OrderItemCreate, OrderItemDisplay,
     OrderCreate, OrderUpdate, OrderDisplay,
 )
 
 router = APIRouter(
-    prefix='/products',
-    tags=['products']
+    prefix='/orders',
+    tags=['orders']
 )
 
 def getOrders(db: Session, skip: int = 0, limit: int = 100):

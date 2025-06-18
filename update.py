@@ -1,6 +1,6 @@
 from sqlalchemy.orm.session import Session
-from schemas import OrderUpdate, ProductUpdate
-from db.tables import Order, OrderItem, Product
+from schemas import OrderUpdate, ProductUpdate, UserUpdate
+from db.tables import Order, OrderItem, Product, User
 
 def updateProduct(db: Session, p_name: str, request: ProductUpdate):
     db_product = db.query(Product).filter(Product.product_name == p_name).first()
@@ -47,3 +47,24 @@ def updateOrderItem(db: Session, order_id: int, item_id: int, new_quantity: int)
     db.refresh(db_item)
     db.refresh(db_order)
     return db_item
+
+def updateUser(db: Session, user_id: int, user_update: UserUpdate):
+    db_user = db.query(User).filter(User.id == user_id).first()
+    if not db_user:
+        return None
+
+    update_data = user_update.model_dump(exclude_unset=True)
+
+    if 'username' in update_data and update_data['username'] != db_user.username:
+        if db.query(User).filter(User.username == update_data['username']).first():
+            raise ValueError("New username already taken")
+    if 'email' in update_data and update_data['email'] != db_user.email:
+        if db.query(User).filter(User.email == update_data['email']).first():
+            raise ValueError("New email already taken")
+
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user

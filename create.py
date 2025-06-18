@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session, joinedload
 from db.tables import Order, OrderItem, Product, User
-from schemas import OrderCreate, ProductCreate, UserBase
+from schemas import OrderCreate, ProductCreate, UserCreate
 from hash import Hash
 from datetime import datetime
 from decimal import Decimal
@@ -62,10 +62,21 @@ def createOrder(db: Session, order_data: OrderCreate):
     db_order = db.query(Order).options(joinedload(Order.order_items)).filter(Order.order_id == db_order.order_id).first()
     return db_order
 
-def create_user(db: Session, request = UserBase):
+def createUser(db: Session, user_data = UserCreate):
+    existing_user_username = db.query(User).filter(User.username == user_data.username).first()
+    existing_user_email = db.query(User).filter(User.email == user_data.email).first()
+    if existing_user_username:
+        raise ValueError('username exists!')
+    
+    if existing_user_email:
+        raise ValueError("Email already registered")
+    
     new_user = User(
-        email = request.email,
-        hashed_password = Hash.bcrypt(request.password)
+        username = user_data.username,
+        email = user_data.email,
+        password_hash = Hash.bcrypt(user_data.password),
+        full_name = user_data.full_name,
+        hostel_no = user_data.hostel_no
     )
 
     db.add(new_user)

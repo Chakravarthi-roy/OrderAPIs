@@ -80,10 +80,24 @@ class ProductDisplay(ProductBase):
 
 #user
 class UserBase(BaseModel):
+    username: str = Field(..., min_length=3, max_length=50)
     email: str
-    password: str
+    full_name: Optional[str] = Field(None, max_length=100)
+    hostel_no: Optional[int] = None
     
-class UserDisplay(BaseModel):
-    email: str
+class UserCreate(UserBase):
+    password: str = Field(..., min_length=6)
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = Field(..., min_length=3, max_length=50)
+    email: Optional[str] = None
+    full_name: Optional[str] = Field(None, max_length=100)
+    hostel_no: Optional[int] = None
+
+    class Config:
+        from_attributes = True
+
+class UserDisplay(UserBase):
+    id: int
     class Config():
         from_attributes = True
