@@ -1,36 +1,28 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import joinedload
-from sqlalchemy.orm.session import Session
-from typing import List
-from db.tables import Product, Order, OrderItem
-from decimal import Decimal
+from sqlalchemy.orm import Session, joinedload
+from db.tables import Order, OrderItem, Product
 from database import get_db
+from typing import List, Optional
 from create import createOrder
-from delete import deleteOrder, deleteOrderItem
 from update import updateOrder, updateOrderItem
+from delete import deleteOrder, deleteOrderItem
+
 from schemas import (
-    OrderItemCreate, 
-    OrderItemDisplay, 
-    OrderUpdate, 
-    OrderCreate, 
-    OrderDisplay
+    OrderItemCreate, OrderItemDisplay,
+    OrderCreate, OrderUpdate, OrderDisplay,
 )
 
 router = APIRouter(
-    prefix='/orders',
-    tags=['orders']
+    prefix='/products',
+    tags=['products']
 )
-
-def calculate_order_total(db: Session, order_id: int) -> Decimal:
-    items = db.query(OrderItem).filter(OrderItem.order_id == order_id).all()
-    total = sum(item.quantity * item.item_price_at_order for item in items)
-    return total
 
 def getOrders(db: Session, skip: int = 0, limit: int = 100):
     return db.query(Order).options(joinedload(Order.order_items)).offset(skip).limit(limit).all()
 
 def getOrder(db: Session, order_id: int):
     return db.query(Order).options(joinedload(Order.order_items)).filter(Order.order_id == order_id).first()
+
 
 def addItem(db: Session, order_id: int, item_data: OrderItemCreate):
     db_order = db.query(Order).filter(Order.order_id == order_id).first()
@@ -102,7 +94,7 @@ def delete_order(order_id: int, db: Session = Depends(get_db)):
     db_order = deleteOrder(db, order_id)
     if db_order is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
-    return 
+    return
 
 @router.post("/{order_id}/items", response_model=OrderItemDisplay, status_code=status.HTTP_201_CREATED)
 def add_item_to_order(order_id: int, item_data: OrderItemCreate, db: Session = Depends(get_db)):
