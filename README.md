@@ -186,8 +186,8 @@ http://localhost:8089
 
 Once you open `http://localhost:8089` you will see:
 
-- **Number of users** — total concurrent users to simulate (e.g. 300)
-- **Ramp up** — how many users to add per second (e.g. 10 means it reaches 300 users in 30 seconds)
+- **Number of users:** total concurrent users to simulate (e.g. 300)
+- **Ramp up:** how many users to add per second (e.g. 10 means it reaches 300 users in 30 seconds)
 - Click **Start swarming** to begin the test
 
 While the test runs, the dashboard shows:
